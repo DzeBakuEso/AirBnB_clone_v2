@@ -1,11 +1,8 @@
+#!/usr/bin/python3 
 import json
 from models.base_model import BaseModel
-from models.user import User
-from models.place import Place
-from models.state import State
-from models.city import City
 from models.amenity import Amenity
-from models.review import Review
+from models.place import Place
 
 class FileStorage:
     """Serializes instances to a JSON file and deserializes back to instances."""
@@ -13,69 +10,63 @@ class FileStorage:
     __file_path = 'file.json'
     __objects = {}
 
-    # Dictionary mapping class names to their respective class objects
-    classes = {
-        'BaseModel': BaseModel, 'User': User, 'Place': Place,
-        'State': State, 'City': City, 'Amenity': Amenity,
-        'Review': Review
-    }
-
     def all(self, cls=None):
-        """Returns a dictionary of all objects currently in storage."""
+        """Returns a dictionary of all objects."""
         if cls:
-            return {k: v for k, v in self.__objects.items() if isinstance(v, cls)}
+            return {key: obj for key, obj in self.__objects.items() if isinstance(obj, cls)}
         return self.__objects
 
-    def new(self, obj):
-        """Adds a new object to the storage dictionary."""
-        if obj:
-            self.__objects[f'{obj.__class__.__name__}.{obj.id}'] = obj
-
     def save(self):
-        """Saves the current state of the storage to the file."""
-        try:
-            with open(self.__file_path, 'w') as f:
-                temp_dict = {key: obj.to_dict() for key, obj in self.__objects.items()}
-                json.dump(temp_dict, f)
-
-        except Exception as e:
-            print(f"Error: Could not save data. {e}")
+        """Saves all objects to the JSON file."""
+        with open(self.__file_path, 'w') as f:
+            json.dump(self.__objects, f)
 
     def reload(self):
-        """Loads storage dictionary from file"""
+        """Deserializes the JSON file to load all objects."""
         try:
             with open(self.__file_path, 'r') as f:
-                temp = json.load(f)
-                for key, val in temp.items():
-                    class_name = val.get('__class__', None)
-                    if class_name and class_name in self.classes:
-                        # Retrieve the actual class based on the class_name string
-                        cls = self.classes[class_name]
-                        # Correctly instantiate the class with the data
-                        self.__objects[key] = cls(**val)
-                    else:
-                        print(f"Error: Class '{class_name}' not found in classes dictionary or is missing '__class__' field")
+                self.__objects = json.load(f)
         except FileNotFoundError:
-            print("Error: File not found. No objects loaded.")
-        except json.JSONDecodeError:
-            print("Error: Invalid JSON format in file. Could not reload data.")
-        except Exception as e:
-            print(f"Unexpected error: {e}")
+            pass
+
+    def get_amenities_for_place(self, place_id):
+        """Returns a list of Amenity instances linked to a specific Place."""
+        # Get the place instance
+        place = self.__objects.get(f"Place.{place_id}")
+        if not place:
+            return []
+
+        # Get all amenities
+        all_amenities = self.all(Amenity)
+
+        # Find amenities linked to the place using its amenity_ids
+        place_amenities = [amenity for amenity in all_amenities.values()
+                           if amenity.id in getattr(place, 'amenity_ids', [])]
+        return place_amenities
+
+    def set_amenities_for_place(self, place, amenity):
+        """Appends an Amenity.id to the place's amenity_ids."""
+        if isinstance(amenity, Amenity):
+            if place.id not in place.amenity_ids:
+                place.amenity_ids.append(amenity.id)
+                self.save()
+
+    def add_object(self, obj):
+        """Adds an object to the storage."""
+        if obj:
+            key = f"{obj.__class__.__name__}.{obj.id}"
+            self.__objects[key] = obj
+            self.save()
 
     def delete(self, obj=None):
-        """Deletes an object from storage dictionary."""
+        """Deletes an object from the storage."""
         if obj:
-            key = f'{obj.__class__.__name__}.{obj.id}'
+            key = f"{obj.__class__.__name__}.{obj.id}"
             if key in self.__objects:
                 del self.__objects[key]
                 self.save()
-            else:
-                print(f"Error: Object {obj} not found in storage.")
 
-    # New method to retrieve all reviews for a place
-    def get_reviews_for_place(self, place_id):
-        """Returns a list of all reviews for the specified place."""
-        all_reviews = self.all(Review)
-        place_reviews = [review for review in all_reviews.values() if review.place_id == place_id]
-        return place_reviews
+    def get(self, cls, id):
+        """Returns an object based on the class name and id."""
+        return self.__objects.get(f"{cls.__name__}.{id}")
 
