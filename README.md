@@ -131,8 +131,13 @@ python3 -m unittest discover tests
 ```
 
 ## Author
-- **Name:** Dzeble
-- **Contact:** [Contact Information]
+## Contributors
+
+- Original Authors:
+  - Jane Doe
+  - John Smith
+- Updates by:
+  - Dzeble kwame (GitHub: DzeBakuEso)
 
 ---
 End of `README.md`
