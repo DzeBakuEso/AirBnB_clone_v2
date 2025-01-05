@@ -1,3 +1,5 @@
+import json
+
 class FileStorage:
     """Handles the storage of all objects in a JSON file"""
 
@@ -43,14 +45,24 @@ class FileStorage:
             'State': State, 'City': City, 'Amenity': Amenity,
             'Review': Review
         }
+
         try:
             temp = {}
             with open(FileStorage.__file_path, 'r') as f:
-                temp = json.load(f)
-                for key, val in temp.items():
-                    self.all()[key] = classes[val['__class__']](**val)
+                try:
+                    # Read the content of the file
+                    temp = json.load(f)
+                    for key, val in temp.items():
+                        # Ensure the class exists in the mapping
+                        if val['__class__'] in classes:
+                            self.all()[key] = classes[val['__class__']](**val)
+                except json.JSONDecodeError:
+                    pass  # If there's a JSON decoding error, ignore the file
+
         except FileNotFoundError:
-            pass
+            pass  # If file is not found, there's nothing to reload
+        except Exception as e:
+            print(f"Error loading file: {e}")  # For debugging unexpected errors
 
     def delete(self, obj=None):
         """Deletes obj from __objects if it exists"""
