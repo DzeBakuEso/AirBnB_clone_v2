@@ -9,7 +9,7 @@ from models.review import Review
 
 class FileStorage:
     """Serializes instances to a JSON file and deserializes back to instances."""
-    
+
     __file_path = 'file.json'
     __objects = {}
 
@@ -37,6 +37,7 @@ class FileStorage:
             with open(self.__file_path, 'w') as f:
                 temp_dict = {key: obj.to_dict() for key, obj in self.__objects.items()}
                 json.dump(temp_dict, f)
+
         except Exception as e:
             print(f"Error: Could not save data. {e}")
 
@@ -70,3 +71,11 @@ class FileStorage:
                 self.save()
             else:
                 print(f"Error: Object {obj} not found in storage.")
+
+    # New method to retrieve all reviews for a place
+    def get_reviews_for_place(self, place_id):
+        """Returns a list of all reviews for the specified place."""
+        all_reviews = self.all(Review)
+        place_reviews = [review for review in all_reviews.values() if review.place_id == place_id]
+        return place_reviews
+
