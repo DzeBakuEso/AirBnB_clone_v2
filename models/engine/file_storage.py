@@ -4,7 +4,7 @@ class FileStorage:
     """Handles the storage of all objects in a JSON file"""
 
     __objects = {}
-    __file_path = 'file.json'  # You may need to adjust the path if required.
+    __file_path = 'file.json'
 
     def all(self, cls=None):
         """Returns a dictionary of all objects or objects of a specific class"""
@@ -40,6 +40,7 @@ class FileStorage:
         from models.amenity import Amenity
         from models.review import Review
 
+        # Dictionary mapping class names to their respective class objects
         classes = {
             'BaseModel': BaseModel, 'User': User, 'Place': Place,
             'State': State, 'City': City, 'Amenity': Amenity,
@@ -47,22 +48,23 @@ class FileStorage:
         }
 
         try:
-            temp = {}
             with open(FileStorage.__file_path, 'r') as f:
-                try:
-                    # Read the content of the file
-                    temp = json.load(f)
-                    for key, val in temp.items():
-                        # Ensure the class exists in the mapping
-                        if val['__class__'] in classes:
-                            self.all()[key] = classes[val['__class__']](**val)
-                except json.JSONDecodeError:
-                    pass  # If there's a JSON decoding error, ignore the file
-
+                temp = json.load(f)
+                for key, val in temp.items():
+                    class_name = val['__class__']
+                    if class_name in classes:
+                        # Get the actual class using the class name
+                        cls = classes[class_name]
+                        # Instantiate the object using the class and data from the JSON
+                        self.all()[key] = cls(**val)
+                    else:
+                        print(f"Error: {class_name} not found in classes dictionary")
         except FileNotFoundError:
-            pass  # If file is not found, there's nothing to reload
+            print("Error: File not found. No objects loaded.")
+        except json.JSONDecodeError:
+            print("Error: Invalid JSON format in file. Could not reload data.")
         except Exception as e:
-            print(f"Error loading file: {e}")  # For debugging unexpected errors
+            print(f"Unexpected error: {e}")
 
     def delete(self, obj=None):
         """Deletes obj from __objects if it exists"""
