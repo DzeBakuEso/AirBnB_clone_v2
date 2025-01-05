@@ -2,7 +2,6 @@
 """ Place Module for HBNB project """
 from models.base_model import BaseModel
 
-
 class Place(BaseModel):
     """ A place to stay """
     city_id = ""
@@ -16,3 +15,10 @@ class Place(BaseModel):
     latitude = 0.0
     longitude = 0.0
     amenity_ids = []
+
+    def __init__(self, *args, **kwargs):
+        """ Initialize a new place with attributes passed as kwargs """
+        super().__init__(*args, **kwargs)
+        if kwargs:
+            for key, value in kwargs.items():
+                setattr(self, key, value)
