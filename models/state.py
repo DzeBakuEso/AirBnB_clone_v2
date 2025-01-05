@@ -1,14 +1,12 @@
 #!/usr/bin/python3
 """ State Module for HBNB project """
-from models.base_model import BaseModel
+from sqlalchemy import Column, String
+from sqlalchemy.orm import relationship
+from models.base_model import BaseModel, Base
+from models.city import City
 
-class State(BaseModel):
-    """ State class representing a state """
-    name = ""
+class State(BaseModel, Base):
+    __tablename__ = "states"
+    name = Column(String(128), nullable=False)
 
-    def __init__(self, *args, **kwargs):
-        """ Initialize a new state with attributes passed as kwargs """
-        super().__init__(*args, **kwargs)
-        if kwargs:
-            for key, value in kwargs.items():
-                setattr(self, key, value)
+    cities = relationship("City", back_populates="state", cascade="all, delete")
